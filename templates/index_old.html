@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Crop Planner & Yield Predictor</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js CDN for plotting graphs -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
+    <style>
+        /* Custom styles for aesthetic enhancements */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f7fafc;
+        }
+        .tab-button.active {
+            border-bottom: 3px solid #059669; /* Emerald 600 */
+            color: #059669;
+        }
+        .card-shadow {
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+    </style>
+</head>
+<body class="min-h-screen p-4 sm:p-8">
+
+    <div class="max-w-6xl mx-auto">
+        <!-- Header -->
+        <header class="text-center py-6 bg-white rounded-xl card-shadow mb-8">
+            <h1 class="text-4xl font-extrabold text-gray-800">AgriSense AI Dashboard</h1>
+            <p class="text-gray-500 mt-2">Intelligent Recommendations and Yield Forecasting for Precision Agriculture</p>
+        </header>
+
+        <!-- Tab Navigation -->
+        <div class="flex border-b border-gray-200 bg-white rounded-t-xl overflow-hidden card-shadow">
+            <button id="tab-rec-btn" class="tab-button active flex-1 py-4 text-center font-medium text-gray-600 transition duration-300 hover:bg-gray-50" onclick="showTab('recommendation')">
+                🌱 Crop Recommendation
+            </button>
+            <button id="tab-yield-btn" class="tab-button flex-1 py-4 text-center font-medium text-gray-600 transition duration-300 hover:bg-gray-50" onclick="showTab('yield')">
+                📈 Yield Prediction
+            </button>
+        </div>
+
+        <!-- Content Area -->
+        <div class="bg-white p-6 sm:p-10 rounded-b-xl card-shadow">
+
+            <!-- 1. Crop Recommendation Tab -->
+            <div id="recommendation-tab" class="tab-content">
+                <h2 class="text-2xl font-semibold mb-6 text-gray-700 border-b pb-2">Optimal Crop Recommendation</h2>
+                
+                <form id="recommendation-form" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <!-- Input Fields: N, P, K, Temp, Humidity, pH, Rainfall -->
+                    <div class="col-span-1">
+                        <label for="N" class="block text-sm font-medium text-gray-700">Nitrogen (N) kg/ha</label>
+                        <input type="number" id="N" name="N" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-3 focus:ring-emerald-500 focus:border-emerald-500" value="90">
+                    </div>
+                    <div class="col-span-1">
+                        <label for="P" class="block text-sm font-medium text-gray-700">Phosphorus (P) kg/ha</label>
+                        <input type="number" id="P" name="P" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-3 focus:ring-emerald-500 focus:border-emerald-500" value="42">
+                    </div>
+                    <div class="col-span-1">
+                        <label for="K" class="block text-sm font-medium text-gray-700">Potassium (K) kg/ha</label>
+                        <input type="number" id="K" name="K" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-3 focus:ring-emerald-500 focus:border-emerald-500" value="43">
+                    </div>
+                    <div class="col-span-1">
+                        <label for="temperature" class="block text-sm font-medium text-gray-700">Temperature (°C)</label>
+                        <input type="number" step="0.01" id="temperature" name="temperature" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-3 focus:ring-emerald-500 focus:border-emerald-500" value="20.88">
+                    </div>
+                    <div class="col-span-1">
+                        <label for="humidity" class="block text-sm font-medium text-gray-700">Humidity (%)</label>
+                        <input type="number" step="0.01" id="humidity" name="humidity" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-3 focus:ring-emerald-500 focus:border-emerald-500" value="82.00">
+                    </div>
+                    <div class="col-span-1">
+                        <label for="ph" class="block text-sm font-medium text-gray-700">pH Value</label>
+                        <input type="number" step="0.01" id="ph" name="ph" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-3 focus:ring-emerald-500 focus:border-emerald-500" value="6.50">
+                    </div>
+                    <div class="col-span-full md:col-span-1 lg:col-span-3">
+                        <label for="rainfall" class="block text-sm font-medium text-gray-700">Rainfall (mm)</label>
+                        <input type="number" step="0.01" id="rainfall" name="rainfall" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-3 focus:ring-emerald-500 focus:border-emerald-500" value="202.94">
+                    </div>
+                    
+                    <div class="col-span-full text-center">
+                        <button type="submit" class="w-full md:w-auto px-6 py-3 bg-emerald-600 text-white font-semibold rounded-lg shadow-md hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition duration-150">
+                            Get Crop Recommendation
+                        </button>
+                    </div>
+                </form>
+
+                <!-- Recommendation Output -->
+                <div id="recommendation-results" class="mt-8 pt-6 border-t border-gray-200 hidden">
+                    <div class="bg-emerald-50 border-l-4 border-emerald-500 p-4 rounded-lg">
+                        <h3 class="text-xl font-bold text-emerald-800 flex items-center">
+                            <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.01 12.01 0 002 12c0 5.523 4.307 10.006 9.873 10.006A11.99 11.99 0 0022 12c0-2.894-1.282-5.548-3.382-7.016z"></path></svg>
+                            Top Recommendation
+                        </h3>
+                        <p class="mt-2 text-lg text-emerald-700">The most suitable crop for these conditions is: <span id="rec-output" class="font-extrabold text-2xl"></span></p>
+                    </div>
+                    
+                    <div class="mt-6">
+                        <h4 class="text-lg font-semibold text-gray-700 mb-3">Ranking & Confidence</h4>
+                        <div class="w-full lg:w-3/5 mx-auto">
+                            <canvas id="recChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. Yield Prediction Tab -->
+            <div id="yield-tab" class="tab-content hidden">
+                <h2 class="text-2xl font-semibold mb-6 text-gray-700 border-b pb-2">Crop Yield Forecasting</h2>
+
+                <form id="yield-form" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <!-- Environmental Inputs (same as Rec) -->
+                    <div class="lg:col-span-2">
+                        <label for="Y_N" class="block text-sm font-medium text-gray-700">Nitrogen (N)</label>
+                        <input type="number" id="Y_N" name="N" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-3 focus:ring-emerald-500 focus:border-emerald-500" value="90">
+                    </div>
+                    <div class="lg:col-span-2">
+                        <label for="Y_P" class="block text-sm font-medium text-gray-700">Phosphorus (P)</label>
+                        <input type="number" id="Y_P" name="P" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-3 focus:ring-emerald-500 focus:border-emerald-500" value="42">
+                    </div>
+                    <div class="lg:col-span-2">
+                        <label for="Y_K" class="block text-sm font-medium text-gray-700">Potassium (K)</label>
+                        <input type="number" id="Y_K" name="K" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-3 focus:ring-emerald-500 focus:border-emerald-500" value="43">
+                    </div>
+                    <div class="lg:col-span-2">
+                        <label for="Y_temperature" class="block text-sm font-medium text-gray-700">Temperature (°C)</label>
+                        <input type="number" step="0.01" id="Y_temperature" name="temperature" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-3 focus:ring-emerald-500 focus:border-emerald-500" value="20.88">
+                    </div>
+                    <div class="lg:col-span-2">
+                        <label for="Y_humidity" class="block text-sm font-medium text-gray-700">Humidity (%)</label>
+                        <input type="number" step="0.01" id="Y_humidity" name="humidity" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-3 focus:ring-emerald-500 focus:border-emerald-500" value="82.00">
+                    </div>
+                    <div class="lg:col-span-2">
+                        <label for="Y_ph" class="block text-sm font-medium text-gray-700">pH Value</label>
+                        <input type="number" step="0.01" id="Y_ph" name="ph" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-3 focus:ring-emerald-500 focus:border-emerald-500" value="6.50">
+                    </div>
+                    <div class="lg:col-span-2">
+                        <label for="Y_rainfall" class="block text-sm font-medium text-gray-700">Rainfall (mm)</label>
+                        <input type="number" step="0.01" id="Y_rainfall" name="rainfall" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-3 focus:ring-emerald-500 focus:border-emerald-500" value="202.94">
+                    </div>
+                    
+                    <!-- Location and Area Inputs -->
+                    <div class="lg:col-span-2">
+                        <label for="Y_area" class="block text-sm font-medium text-gray-700">Area (Hectares)</label>
+                        <input type="number" step="0.01" id="Y_area" name="area" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-3 focus:ring-emerald-500 focus:border-emerald-500" value="10.0">
+                    </div>
+                    
+                    <div class="lg:col-span-2">
+                        <label for="Y_state" class="block text-sm font-medium text-gray-700">State</label>
+                        <select id="Y_state" name="state" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-3 focus:ring-emerald-500 focus:border-emerald-500">
+                            {% for state in states %}
+                                <option value="{{ state }}" {% if state == 'Maharashtra' %}selected{% endif %}>{{ state }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="lg:col-span-2">
+                        <label for="Y_district" class="block text-sm font-medium text-gray-700">District</label>
+                        <select id="Y_district" name="district" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-3 focus:ring-emerald-500 focus:border-emerald-500">
+                            {% for district in districts %}
+                                <option value="{{ district }}" {% if district == 'Mumbai' %}selected{% endif %}>{{ district }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="lg:col-span-2">
+                        <label for="Y_season" class="block text-sm font-medium text-gray-700">Season</label>
+                        <select id="Y_season" name="season" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-3 focus:ring-emerald-500 focus:border-emerald-500">
+                            {% for season in seasons %}
+                                <option value="{{ season }}" {% if season == 'Kharif' %}selected{% endif %}>{{ season }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="col-span-full text-center">
+                        <button type="submit" class="w-full md:w-auto px-6 py-3 bg-indigo-600 text-white font-semibold rounded-lg shadow-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition duration-150">
+                            Forecast Yield
+                        </button>
+                    </div>
+                </form>
+
+                <!-- Yield Output -->
+                <div id="yield-results" class="mt-8 pt-6 border-t border-gray-200 hidden">
+                    <div class="bg-indigo-50 border-l-4 border-indigo-500 p-4 rounded-lg">
+                        <h3 class="text-xl font-bold text-indigo-800 flex items-center">
+                            <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
+                            Predicted Yield per Hectare
+                        </h3>
+                        <p class="mt-2 text-lg text-indigo-700">The forecast suggests a yield of: <span id="yield-output" class="font-extrabold text-2xl"></span></p>
+                    </div>
+
+                    <div class="mt-6">
+                        <h4 class="text-lg font-semibold text-gray-700 mb-3">Yield Trend Analysis</h4>
+                        <div class="w-full lg:w-4/5 mx-auto">
+                            <canvas id="yieldChart"></canvas>
+                        </div>
+                        <p class="mt-4 text-sm text-gray-500 text-center">The line graph compares your forecast against mock historical yields in this region.</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Global Message/Error Box -->
+            <div id="message-box" class="fixed bottom-4 right-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg shadow-lg hidden" role="alert">
+                <strong class="font-bold">Error!</strong>
+                <span class="block sm:inline" id="message-text"></span>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        // Global Chart instances
+        let recChartInstance = null;
+        let yieldChartInstance = null;
+
+        // prepare the js code for auto detecting user location and auto selecting the best approx state and district of the user and auto select the season using current month
+
+
+
+        // --- UI & Tab Control ---
+        function showTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.add('hidden');
+            });
+            document.querySelectorAll('.tab-button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+
+            document.getElementById(tabName + '-tab').classList.remove('hidden');
+            document.getElementById('tab-' + tabName + '-btn').classList.add('active');
+        }
+
+        function showMessage(text, isError = true) {
+            const box = document.getElementById('message-box');
+            const textEl = document.getElementById('message-text');
+            
+            box.classList.remove('hidden', 'bg-red-100', 'border-red-400', 'text-red-700', 'bg-green-100', 'border-green-400', 'text-green-700');
+            
+            if (isError) {
+                box.classList.add('bg-red-100', 'border-red-400', 'text-red-700');
+                box.querySelector('strong').textContent = 'Error!';
+            } else {
+                box.classList.add('bg-green-100', 'border-green-400', 'text-green-700');
+                box.querySelector('strong').textContent = 'Success!';
+            }
+
+            textEl.textContent = text;
+            setTimeout(() => {
+                box.classList.add('hidden');
+            }, 5000);
+        }
+
+        // --- Prediction Handlers ---
+        
+        // 1. Crop Recommendation Submission
+        document.getElementById('recommendation-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const form = e.target;
+            const data = Object.fromEntries(new FormData(form).entries());
+            const resultsDiv = document.getElementById('recommendation-results');
+            
+            try {
+                const response = await fetch('/predict_recommendation', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    document.getElementById('rec-output').textContent = result.prediction.toUpperCase();
+                    resultsDiv.classList.remove('hidden');
+                    
+                    // Update Chart
+                    updateRecChart(result.rankings);
+                } else {
+                    showMessage(result.message || 'Prediction failed. Check server logs.');
+                }
+
+            } catch (error) {
+                console.error('Error:', error);
+                showMessage('An error occurred during recommendation: ' + error.message);
+            }
+        });
+
+        // 2. Yield Prediction Submission
+        document.getElementById('yield-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const form = e.target;
+            const data = Object.fromEntries(new FormData(form).entries());
+            const resultsDiv = document.getElementById('yield-results');
+
+            try {
+                const response = await fetch('/predict_yield', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    document.getElementById('yield-output').textContent = result.prediction;
+                    resultsDiv.classList.remove('hidden');
+                    
+                    // Update Chart
+                    updateYieldChart(result.raw_yield, result.historical_data);
+                } else {
+                    showMessage(result.message || 'Prediction failed. Check server logs.');
+                }
+
+            } catch (error) {
+                console.error('Error:', error);
+                showMessage('An error occurred during yield forecasting: ' + error.message);
+            }
+        });
+
+
+        // --- Chart Functions ---
+        
+        function updateRecChart(rankings) {
+            const labels = rankings.map(r => r.crop.toUpperCase());
+            const data = rankings.map(r => r.confidence * 100);
+
+            if (recChartInstance) {
+                recChartInstance.destroy();
+            }
+
+            const ctx = document.getElementById('recChart').getContext('2d');
+            recChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Confidence (%)',
+                        data: data,
+                        backgroundColor: ['#059669', '#34d399', '#a7f3d0'], // Emerald colors
+                        borderColor: '#059669',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            title: { display: true, text: 'Confidence (%)' }
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false },
+                        title: { display: true, text: 'Top 3 Crop Recommendations' }
+                    }
+                }
+            });
+        }
+
+        function updateYieldChart(currentYield, history) {
+            const historyYears = history.map(d => d.year);
+            const historyYields = history.map(d => d.yield);
+
+            const labels = [...historyYears, 'Forecast'];
+            const data = [...historyYields, currentYield];
+
+            if (yieldChartInstance) {
+                yieldChartInstance.destroy();
+            }
+
+            const ctx = document.getElementById('yieldChart').getContext('2d');
+            yieldChartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Historical Yield (kg/ha)',
+                            data: historyYields,
+                            borderColor: '#3b82f6', // Blue
+                            backgroundColor: 'rgba(59, 130, 246, 0.2)',
+                            tension: 0.3,
+                            fill: false,
+                            pointRadius: 5
+                        },
+                        {
+                            label: 'Predicted Yield (kg/ha)',
+                            data: data,
+                            borderColor: '#8b5cf6', // Indigo for prediction
+                            backgroundColor: 'transparent',
+                            borderDash: [5, 5],
+                            pointRadius: 8,
+                            pointBackgroundColor: ['#3b82f6', '#3b82f6', '#3b82f6', '#3b82f6', '#8b5cf6'],
+                            tension: 0.3,
+                            fill: false
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: false,
+                            title: { display: true, text: 'Yield (kg/ha)' }
+                        },
+                        x: {
+                            title: { display: true, text: 'Year' }
+                        }
+                    },
+                    plugins: {
+                        title: { display: true, text: 'Yield Comparison: Historical vs. Forecast' }
+                    }
+                }
+            });
+        }
+    </script>
+</body>
+</html>
